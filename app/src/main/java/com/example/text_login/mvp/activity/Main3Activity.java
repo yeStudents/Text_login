@@ -26,8 +26,8 @@ public class Main3Activity extends AppCompatActivity implements View.OnClickList
     private EditText edit_name, edit_pwd;
     private Button bt_login, bt_exit;
     private static final String TAG = "MainActivity";
+    /*定义控制器*/
     private MvpPresener mvpPresener;
-
     ProgressDialog waitingDialog;
     AlertDialog.Builder normalDialog;
 

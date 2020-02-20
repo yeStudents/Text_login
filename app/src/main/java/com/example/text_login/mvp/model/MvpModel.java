@@ -23,7 +23,7 @@ public class MvpModel {
     private static final String TAG = "MvpModel";
     String Username,Password;
 
-
+/*获取数据，并请求接口处理，再用一个接口（例如 登录成功或者失败的方法）*/
     public void getdata(Account account, final Callbacks callback) {
 
         //初始化okhttpclient
@@ -64,7 +64,6 @@ public class MvpModel {
                         callback.login_success(new Account(Username,Password,message));
 
                     } else if (flag.equals("02")) {
-                      /*  showNormalDialog(message);*/
                         callback.logi_error(message);
                     }
 
