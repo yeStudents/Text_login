@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.example.text_login.MainActivity">
+    tools:context="com.example.text_login.mvc.MainActivity">
 
     <TextView
         android:layout_width="match_parent"

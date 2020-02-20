@@ -1,4 +1,4 @@
-package com.example.text_login;
+package com.example.text_login.mvp.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -11,46 +11,41 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.example.text_login.R;
+import com.example.text_login.mvc.Main2Activity;
+import com.example.text_login.mvc.MainActivity;
+import com.example.text_login.mvp.model.Account;
+import com.example.text_login.mvp.presener.MvpPresener;
+import com.example.text_login.mvp.view.ImvpView;
 
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class Main3Activity extends AppCompatActivity implements View.OnClickListener, ImvpView {
     private EditText edit_name, edit_pwd;
     private Button bt_login, bt_exit;
-    OkHttpClient okHttpClient;
     private static final String TAG = "MainActivity";
+    private MvpPresener mvpPresener;
+
     ProgressDialog waitingDialog;
-     AlertDialog.Builder normalDialog;
-    String Username,Password;
+    AlertDialog.Builder normalDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        init_view();
+        mvpPresener=new MvpPresener(this);
+    }
+
+    private void init_view() {
         edit_name = findViewById(R.id.et_username);
         edit_pwd = findViewById(R.id.et_pwd);
         bt_login = findViewById(R.id.bt_login);
         bt_exit = findViewById(R.id.bt_exit);
         bt_login.setOnClickListener(this);
         bt_exit.setOnClickListener(this);
-        //初始化okhttpclient
-        okHttpClient = new OkHttpClient.Builder()
-                .connectTimeout(6000, TimeUnit.MILLISECONDS)
-                .readTimeout(6000, TimeUnit.MILLISECONDS)
-                .writeTimeout(6000, TimeUnit.MILLISECONDS)
-                .build();
     }
 
     @Override
@@ -60,9 +55,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 String et_name = edit_name.getText().toString();
                 String et_pwd = edit_pwd.getText().toString();
                 if (et_name != null && et_pwd != null) {
-                    init_succees(et_name, et_pwd);
+                  mvpPresener.go_login(new Account(et_name,et_pwd,null));
                 }
-
                 break;
             case R.id.bt_exit:
                 finish();
@@ -70,55 +64,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void init_succees(String name, String pwd) {
-        RequestBody body = new FormBody.Builder()
-                .add("username", name)
-                .add("password", pwd)
-                .build();
-        Request request = new Request.Builder().url("http://106.53.18.103:80/api/users").post(body).build();
-        okHttpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.i(TAG, "onFailure: ");
-            }
 
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-               String mes= response.body().string();
-                Log.i(TAG, "onResponse: " +mes);
-                try {
-                    JSONObject jsonObject=new JSONObject(mes);
-                    String flag=jsonObject.getString("Flag");
-                    String message=jsonObject.getString("Message");
+    @Override
+    public void loginSuccess(Account data) {
+        showWaitingDialog(data.getMessage());
+        try {
+            Thread.sleep(5000);
+            Intent intent=new Intent(Main3Activity.this, Main2Activity.class);
+            intent.putExtra("Username",data.getUsername());
+            intent.putExtra("Password",data.getPwd());
+            startActivity(intent);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Log.i(TAG,data.getMessage());
 
-                    if(flag.equals("01")){
-                        String list=jsonObject.getString("List");
-                        showWaitingDialog(message);
-                        JSONArray jsonArray=new JSONArray(list);
-                        for (int i=0;i<jsonArray.length();i++){
-                          String lists= String.valueOf(jsonArray.get(i));
-                          JSONObject JS=new JSONObject( lists  );
-                            Username= JS.getString("Username");
-                            Password= JS.getString("Password");
-                        }
-                        Intent intent=new Intent(MainActivity.this,Main2Activity.class);
-                        Thread.sleep(5000);
-                        intent.putExtra("Username",Username);
-                        intent.putExtra("Password",Password);
-                        startActivity(intent);
-
-                    }else if(flag.equals("02")) {
-                       showNormalDialog(message);
-                    }
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
     }
+
+    @Override
+    public void loginFail(String result) {
+        showNormalDialog(result);
+        Log.i(TAG,result);
+    }
+
 
     private void showWaitingDialog(final String mss) {
         /* 等待Dialog具有屏蔽其他控件的交互能力
@@ -129,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void run() {
                 waitingDialog=
-                        new ProgressDialog(MainActivity.this);
+                        new ProgressDialog(Main3Activity.this);
                 waitingDialog.setTitle("登录提示");
                 waitingDialog.setMessage(mss +"正在登录...");
                 waitingDialog.setIndeterminate(true);
@@ -150,7 +118,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void run() {
                 normalDialog =
-                        new AlertDialog.Builder(MainActivity.this);
+                        new AlertDialog.Builder(Main3Activity.this);
                 normalDialog.setIcon(R.mipmap.ic_launcher);
                 normalDialog.setTitle("登录提示");
                 normalDialog.setMessage(mes);
@@ -173,6 +141,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        waitingDialog.dismiss();
     }
 
     @Override

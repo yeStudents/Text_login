@@ -1,10 +1,12 @@
-package com.example.text_login;
+package com.example.text_login.mvc;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
+
+import com.example.text_login.R;
 
 public class Main2Activity extends AppCompatActivity {
     private TextView tv_text;
