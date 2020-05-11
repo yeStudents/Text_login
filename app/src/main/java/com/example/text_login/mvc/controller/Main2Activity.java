@@ -1,4 +1,4 @@
-package com.example.text_login.mvc;
+package com.example.text_login.mvc.controller;
 
 import androidx.appcompat.app.AppCompatActivity;
 

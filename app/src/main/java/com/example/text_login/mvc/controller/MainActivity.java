@@ -1,4 +1,4 @@
-package com.example.text_login.mvc;
+package com.example.text_login.mvc.controller;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -7,48 +7,34 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
 import com.example.text_login.R;
+import com.example.text_login.mvc.model.Callbacks;
+import com.example.text_login.mvc.model.Okhttp_go;
+import com.example.text_login.mvp.model.Account;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements Callbacks,View.OnClickListener {
     private EditText edit_name, edit_pwd;
     private Button bt_login, bt_exit;
-    OkHttpClient okHttpClient;
+
     private static final String TAG = "MainActivity";
     ProgressDialog waitingDialog;
-     AlertDialog.Builder normalDialog;
+    AlertDialog.Builder normalDialog;
     String Username,Password;
+    Okhttp_go okhttp_go=null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         init_view();
+        okhttp_go=new Okhttp_go();
 
-        //初始化okhttpclient
-        okHttpClient = new OkHttpClient.Builder()
-                .connectTimeout(6000, TimeUnit.MILLISECONDS)
-                .readTimeout(6000, TimeUnit.MILLISECONDS)
-                .writeTimeout(6000, TimeUnit.MILLISECONDS)
-                .build();
+
     }
 
     private void init_view() {
@@ -67,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 String et_name = edit_name.getText().toString();
                 String et_pwd = edit_pwd.getText().toString();
                 if (et_name != null && et_pwd != null) {
-                    init_succees(et_name, et_pwd);
+                    okhttp_go.getuser(et_name, et_pwd,this);
                 }
 
                 break;
@@ -77,55 +63,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void init_succees(String name, String pwd) {
-        RequestBody body = new FormBody.Builder()
-                .add("username", name)
-                .add("password", pwd)
-                .build();
-        Request request = new Request.Builder().url("http://106.53.18.103:80/api/users").post(body).build();
-        okHttpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.i(TAG, "onFailure: ");
-            }
 
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-               String mes= response.body().string();
-                Log.i(TAG, "onResponse: " +mes);
-                try {
-                    JSONObject jsonObject=new JSONObject(mes);
-                    String flag=jsonObject.getString("Flag");
-                    String message=jsonObject.getString("Message");
-
-                    if(flag.equals("01")){
-                        String list=jsonObject.getString("List");
-                        showWaitingDialog(message);
-                        JSONArray jsonArray=new JSONArray(list);
-                        for (int i=0;i<jsonArray.length();i++){
-                          String lists= String.valueOf(jsonArray.get(i));
-                          JSONObject JS=new JSONObject( lists  );
-                            Username= JS.getString("Username");
-                            Password= JS.getString("Password");
-                        }
-                        Intent intent=new Intent(MainActivity.this,Main2Activity.class);
-                        Thread.sleep(5000);
-                        intent.putExtra("Username",Username);
-                        intent.putExtra("Password",Password);
-                        startActivity(intent);
-
-                    }else if(flag.equals("02")) {
-                       showNormalDialog(message);
-                    }
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
 
     private void showWaitingDialog(final String mss) {
             /* 等待Dialog具有屏蔽其他控件的交互能力
@@ -186,5 +124,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onDestroy() {
         super.onDestroy();
         waitingDialog.dismiss();
+    }
+
+    @Override
+    public void login_success(Account account) {
+        showWaitingDialog(account.getMessage());
+        Intent intent=new Intent(MainActivity.this,Main2Activity.class);
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        intent.putExtra("Username",account.getUsername());
+        intent.putExtra("Password",account.getPwd());
+        startActivity(intent);
+    }
+
+    @Override
+    public void logi_error(String result) {
+        showNormalDialog(result);
     }
 }

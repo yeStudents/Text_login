@@ -11,16 +11,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.example.text_login.R;
-import com.example.text_login.mvc.Main2Activity;
-import com.example.text_login.mvc.MainActivity;
+import com.example.text_login.mvc.controller.Main2Activity;
 import com.example.text_login.mvp.model.Account;
 import com.example.text_login.mvp.presener.MvpPresener;
 import com.example.text_login.mvp.view.ImvpView;
-
-import okhttp3.OkHttpClient;
 
 public class Main3Activity extends AppCompatActivity implements View.OnClickListener, ImvpView {
     private EditText edit_name, edit_pwd;
